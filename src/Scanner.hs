@@ -63,7 +63,7 @@ charDeleteCountSumUpperLimit = 2_000_000
 
 
 scanFile :: MonadIO m => FilePath -> FilePath -> m (Either ErrorMsg ())
-scanFile input output = do
+scanFile input output = runExceptT $ do
     lines <- getLines input
     case headMay lines of
         Just h -> do
@@ -74,20 +74,11 @@ scanFile input output = do
                         Just opLines -> do
                             eiModel <- parseOps output opCount opLines
                             case eiModel of
-                                Right model -> do
-                                    pure $ Right ()
-
-                                Left err ->
-                                    pure $ Left err
-
-                        Nothing -> do
-                            pure $ Left $ errorWithLineNum 2 "Operation expected" 
-
-                Nothing -> 
-                    pure $ Left $ errorWithLineNum 1 "Operation count expected" 
-
-        Nothing -> do
-            pure $ Left $ errorWithLineNum 1 "Operation count expected" 
+                                Right model -> except $ Right ()
+                                Left err -> except $ Left err
+                        Nothing -> except $ Left $ errorWithLineNum 2 "Operation expected" 
+                Nothing -> except $ Left $ errorWithLineNum 1 "Operation count expected" 
+        Nothing -> except $ Left $ errorWithLineNum 1 "Operation count expected" 
     
 
 getLines :: MonadIO m => FilePath -> m [Line]
@@ -106,11 +97,8 @@ parseOps output opCount xs
             eiOps = parseCleanOps [] numberedLines
         in
             case eiOps of
-                Right ops ->
-                    performOps (initialModel output) ops
-
-                Left err -> do
-                    pure $ Left err      
+                Right ops -> performOps (initialModel output) ops
+                Left err -> pure $ Left err      
 
 
 parseCleanOps :: [TaggedOp] -> [(Int, Line)] -> Either ErrorMsg [TaggedOp]
@@ -139,51 +127,52 @@ parseOp (lineNum, line) = do
         let mbOpCode = readMaybe $ head tokens :: Maybe Int -- safe head
         case mbOpCode of
             Just opCode ->
-                case opCode of
-                    1 ->
-                        case tailMay tokens of 
-                            Just args ->                                    
-                                if length args == 1 then do
-                                    let appendage = head args -- safe
-                                    if length appendage == length (filter (\x -> isAlpha x && isLower x) appendage) then
-                                        Right $ TaggedOpAppend $ OpAppend appendage lineNum
-                                    else
-                                        Left $ errorWithLineNum lineNum "All input characters are lowercase English letters"  
+                case opCode of                    
+                    1 -> case tailMay tokens of 
+                        Just args ->                                    
+                            if length args == 1 then do
+                                let appendage = head args -- safe
+                                if length appendage == length (filter (\x -> isAlpha x && isLower x) appendage) then
+                                    Right $ TaggedOpAppend $ OpAppend appendage lineNum
                                 else
-                                    Left $ errorWithLineNum lineNum "Append has one arg"  
-                            Nothing ->
-                                Left $ errorWithLineNum lineNum "Append has one arg"   
-                    2 ->
-                        case tailMay tokens of
-                            Just args ->
-                                if length args == 1 then do
-                                    let mbArg = readMaybe $ head args :: Maybe Int -- safe head
-                                    case mbArg of
-                                        Just arg -> 
-                                            Right $ TaggedOpDelete $ OpDelete arg lineNum
-                                        Nothing -> 
-                                            Left $ errorWithLineNum lineNum "Delete has one int arg"
-                                else
-                                    Left $ errorWithLineNum lineNum "Delete has one arg"  
-                            Nothing ->
-                                Left $ errorWithLineNum lineNum "Delete has one arg"                             
-                    3 ->
-                        case tailMay tokens of
-                            Just args ->
-                                if length args == 1 then do
-                                    let mbArg = readMaybe $ head args :: Maybe Int -- safe head
-                                    case mbArg of
-                                        Just arg -> 
-                                            Right $ TaggedOpPrint $ OpPrint arg lineNum
-                                        Nothing -> 
-                                            Left $ errorWithLineNum lineNum "Print has one int arg"
-                                else
-                                    Left $ errorWithLineNum lineNum "Print has one arg"  
-                            Nothing ->
-                                Left $ errorWithLineNum lineNum "Print has one arg"                               
+                                    Left $ errorWithLineNum lineNum "All input characters are lowercase English letters"  
+                            else
+                                Left $ errorWithLineNum lineNum "Append has one arg"  
+                        Nothing ->
+                            Left $ errorWithLineNum lineNum "Append has one arg"   
+
+                    2 -> case tailMay tokens of
+                        Just args ->
+                            if length args == 1 then do
+                                let mbArg = readMaybe $ head args :: Maybe Int -- safe head
+                                case mbArg of
+                                    Just arg -> 
+                                        Right $ TaggedOpDelete $ OpDelete arg lineNum
+                                    Nothing -> 
+                                        Left $ errorWithLineNum lineNum "Delete has one int arg"
+                            else
+                                Left $ errorWithLineNum lineNum "Delete has one arg"  
+                        Nothing ->
+                            Left $ errorWithLineNum lineNum "Delete has one arg"    
+
+                    3 -> case tailMay tokens of
+                        Just args ->
+                            if length args == 1 then do
+                                let mbArg = readMaybe $ head args :: Maybe Int -- safe head
+                                case mbArg of
+                                    Just arg -> 
+                                        Right $ TaggedOpPrint $ OpPrint arg lineNum
+                                    Nothing -> 
+                                        Left $ errorWithLineNum lineNum "Print has one int arg"
+                            else
+                                Left $ errorWithLineNum lineNum "Print has one arg"  
+                        Nothing ->
+                            Left $ errorWithLineNum lineNum "Print has one arg"    
+
                     4 ->
                         if tokenLength == 1 then Right $ TaggedOpUndo $ OpUndo lineNum
                         else Left $ errorWithLineNum lineNum "Undo has no args"    
+
                     _ -> 
                         Left $ errorWithLineNum lineNum "Invalid operation type"     
             Nothing ->
@@ -193,8 +182,7 @@ parseOp (lineNum, line) = do
     
 
 performOps :: MonadIO m => Model -> [TaggedOp] -> m (Either ErrorMsg Model)
-performOps model [] =
-    pure $ Right model
+performOps model [] = pure $ Right model
 
 performOps model (op : xs) =
     case op of

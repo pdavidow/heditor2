@@ -67,7 +67,7 @@ executable heditor2-exe
 
 test-suite heditor2-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: test.hs
   other-modules:
       Paths_heditor2
   hs-source-dirs:
