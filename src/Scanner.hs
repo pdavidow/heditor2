@@ -15,6 +15,7 @@ import           Control.Monad.IO.Class (MonadIO, liftIO)
 import           Control.Monad.Trans.Except (ExceptT(..), except , runExceptT)
 import           Text.Read (readMaybe)
 import           Data.Char (isAlpha, isLower)
+import           Data.Either.Combinators (maybeToRight)
 import           Data.String.Utils (rstrip)
 import           Data.Text (dropEnd, pack, takeEnd, unpack)
 import           Safe (atMay, headMay, tailMay) 
@@ -65,21 +66,16 @@ charDeleteCountSumUpperLimit = 2_000_000
 scanFile :: MonadIO m => FilePath -> FilePath -> m (Either ErrorMsg ())
 scanFile input output = runExceptT $ do
     lines <- getLines input
-    case headMay lines of
-        Just h -> do
-            let mbOpCount = readMaybe h :: Maybe Int
-            case mbOpCount of
-                Just opCount ->
-                    case tailMay lines of
-                        Just opLines -> do
-                            eiModel <- parseOps output opCount opLines
-                            case eiModel of
-                                Right model -> except $ Right ()
-                                Left err -> except $ Left err
-                        Nothing -> except $ Left $ errorWithLineNum 2 "Operation expected" 
-                Nothing -> except $ Left $ errorWithLineNum 1 "Operation count expected" 
-        Nothing -> except $ Left $ errorWithLineNum 1 "Operation count expected" 
-    
+    h <- except $ maybeToRight (errorWithLineNum 1 "Operation count expected") $ headMay lines
+    opCount <- except $ maybeToRight (errorWithLineNum 1 "Operation count expected") (readMaybe h :: Maybe Int)
+    opLines <- except $ maybeToRight (errorWithLineNum 2 "Operation expected") $ tailMay lines
+    -- ExceptT $ parseOps output opCount opLines
+
+    eiModel <- parseOps output opCount opLines
+    case eiModel of
+        Right model -> except $ Right ()
+        Left err -> except $ Left err
+
 
 getLines :: MonadIO m => FilePath -> m [Line]
 getLines x = do
