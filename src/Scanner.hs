@@ -1,7 +1,7 @@
-{-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE NumericUnderscores  #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections       #-}
 
 module Scanner
     ( scanFile
