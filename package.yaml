@@ -21,6 +21,15 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- directory
+- MissingH
+- safe
+- text
+- transformers
+- tasty
+- tasty-hunit
+- tasty-smallcheck
+- tasty-quickcheck
 
 library:
   source-dirs: src
@@ -46,3 +55,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - heditor2
+    - tasty
+    - tasty-hunit
+    - tasty-smallcheck
+    - tasty-quickcheck
