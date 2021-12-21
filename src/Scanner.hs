@@ -1,7 +1,4 @@
-{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE NumericUnderscores  #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections       #-}
 
 module Scanner
     ( scanFile
@@ -12,7 +9,7 @@ module Scanner
     where
         
 import           Control.Monad.IO.Class (MonadIO, liftIO)        
-import           Control.Monad.Trans.Except (ExceptT(..), except, mapExcept, runExceptT)
+import           Control.Monad.Trans.Except (ExceptT(..), except, runExceptT)
 import           Text.Read (readMaybe)
 import           Data.Char (isAlpha, isLower)
 import           Data.Either.Combinators (maybeToRight)
@@ -54,7 +51,7 @@ data Model = Model
 
     
 initialModel :: FilePath -> Model
-initialModel  = Model "" [] 0 0 
+initialModel = Model "" [] 0 0 
 
 
 opCountUpperLimit, appendageLengthSumUpperLimit, charDeleteCountSumUpperLimit :: Int
@@ -102,7 +99,7 @@ parseOp (lineNum, line) = do
     let tokenLength = length tokens
     _ <- if tokenLength > 0 then Right () else Left $ errorWithLineNum lineNum "Operation type expected"
     opCode <- maybeToRight (errorWithLineNum lineNum "Invalid operation type") (readMaybe $ head tokens :: Maybe Int) -- safe head
-    
+
     case opCode of                    
         1 -> do
             args <- maybeToRight (errorWithLineNum lineNum "Append has one arg") $ tailMay tokens                                  
@@ -147,7 +144,6 @@ parseOp (lineNum, line) = do
 
 performOps :: MonadIO m => Model -> [TaggedOp] -> m (Either ErrorMsg Model)
 performOps model [] = pure $ Right model
-
 performOps model (op : xs) =
     case op of
         TaggedOpAppend (OpAppend appendage lineNum) ->
@@ -268,14 +264,12 @@ basicDelete charsToDelete_Count lineNum model =
             Left $ errorWithLineNum lineNum "String may not be empty"
         else if charsToDelete_Count == 0 || charsToDelete_Count > len then
             Left $ errorWithLineNum lineNum "1 <= count <= string length"
-        else
-            Right $ 
-                Model
-                    (unpack $ dropEnd charsToDelete_Count $ pack $ _string model)
-                    (_undos model)
-                    (_appendageLengthSum model)
-                    (_charDeleteCountSum model)
-                    (_printOutput model)  
+        else Right $ Model
+            (unpack $ dropEnd charsToDelete_Count $ pack $ _string model)
+            (_undos model)
+            (_appendageLengthSum model)
+            (_charDeleteCountSum model)
+            (_printOutput model)  
 
 
 errorWithLineNum :: Int -> String -> String
