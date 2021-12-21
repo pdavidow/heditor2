@@ -76,21 +76,17 @@ scanFile input output = runExceptT $ do
 getLines :: MonadIO m => FilePath -> m [Line]
 getLines x = do
     contents <- liftIO $ readFile x -- lazy
-    pure $ lines $ rstrip contents    
+    pure $ lines $ rstrip contents       
 
 
 parseOps :: MonadIO m => FilePath -> Int -> [Line] -> m (Either ErrorMsg Model)
-parseOps output opCount xs 
-    | opCount > opCountUpperLimit = pure $ Left $ errorWithLineNum 1 $ "Operation count must be a positive integer <= " ++ show opCountUpperLimit
-    | opCount /= length xs = pure $ Left $ errorWithLineNum 1 "Operation count does not match actual"
-    | otherwise =
-        let 
-            numberedLines = zip [(2 :: Int)..] xs 
-            eiOps = parseCleanOps [] numberedLines
-        in
-            case eiOps of
-                Right ops -> performOps (initialModel output) ops
-                Left err -> pure $ Left err      
+parseOps output opCount xs = runExceptT $ 
+    if opCount > opCountUpperLimit then except $ Left $ errorWithLineNum 1 $ "Operation count must be a positive integer <= " ++ show opCountUpperLimit
+    else if opCount /= length xs then except $ Left $ errorWithLineNum 1 "Operation count does not match actual"
+    else do
+        let numberedLines = zip [(2 :: Int)..] xs 
+        ops <- except $ parseCleanOps [] numberedLines
+        ExceptT $ performOps (initialModel output) ops              
 
 
 parseCleanOps :: [TaggedOp] -> [(Int, Line)] -> Either ErrorMsg [TaggedOp]
