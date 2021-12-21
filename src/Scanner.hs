@@ -90,19 +90,10 @@ parseOps output opCount xs = runExceptT $
 
 
 parseCleanOps :: [TaggedOp] -> [(Int, Line)] -> Either ErrorMsg [TaggedOp]
-parseCleanOps acc [] = 
-    Right acc
-
-parseCleanOps acc (numberedLine : xs) = 
-    let 
-        eiOp = parseOp numberedLine
-    in
-        case eiOp of
-            Right op ->
-                parseCleanOps (acc ++ [op]) xs
-
-            Left err -> 
-                Left err
+parseCleanOps acc [] = Right acc
+parseCleanOps acc (numberedLine : xs) = do
+    op <- parseOp numberedLine 
+    parseCleanOps (acc ++ [op]) xs
 
 
 -- todo refactor
