@@ -5,14 +5,13 @@ module TestHelper
     where
  
 import System.Directory (removeFile)
-import System.IO
-
-import Scanner (scanFile, opCount_UpperLimit, appendageLengthSum_UpperLimit, charDeleteCountSum_UpperLimit)
+import System.IO ( Handle, hClose, openFile, hPutStr, hPutStrLn, IOMode(WriteMode) )
+import Scanner (scanFile, opCountUpperLimit, appendageLengthSumUpperLimit, charDeleteCountSumUpperLimit)
 
 
 genFile_exceed__appendageLengthSum_UpperLimit :: FilePath -> Int -> IO ()
 genFile_exceed__appendageLengthSum_UpperLimit filePath excess = do
-    let totalLength = appendageLengthSum_UpperLimit + excess
+    let totalLength = appendageLengthSumUpperLimit + excess
     let sectionLength = 5000
     let appendages = monoCharStrings totalLength sectionLength
 
@@ -31,7 +30,7 @@ genFile_exceed__appendageLengthSum_UpperLimit filePath excess = do
 
 genFile_exceed__charDeleteCountSum_UpperLimit :: FilePath -> Int -> IO ()
 genFile_exceed__charDeleteCountSum_UpperLimit filePath excess = do
-    let totalLength = appendageLengthSum_UpperLimit
+    let totalLength = appendageLengthSumUpperLimit
     let sectionLength = 5000
     let appendages = monoCharStrings totalLength sectionLength
     let isExceedingLimit = excess > 0

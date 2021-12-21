@@ -35,6 +35,7 @@ library
       MissingH
     , base >=4.7 && <5
     , directory
+    , either
     , safe
     , tasty
     , tasty-hunit
@@ -55,6 +56,7 @@ executable heditor2-exe
       MissingH
     , base >=4.7 && <5
     , directory
+    , either
     , heditor2
     , safe
     , tasty
@@ -67,7 +69,7 @@ executable heditor2-exe
 
 test-suite heditor2-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: test.hs
   other-modules:
       Paths_heditor2
   hs-source-dirs:
@@ -77,6 +79,7 @@ test-suite heditor2-test
       MissingH
     , base >=4.7 && <5
     , directory
+    , either
     , heditor2
     , safe
     , tasty
