@@ -12,7 +12,7 @@ module Scanner
     where
         
 import           Control.Monad.IO.Class (MonadIO, liftIO)        
-import           Control.Monad.Trans.Except (ExceptT(..), except , runExceptT)
+import           Control.Monad.Trans.Except (ExceptT(..), except, mapExcept, runExceptT)
 import           Text.Read (readMaybe)
 import           Data.Char (isAlpha, isLower)
 import           Data.Either.Combinators (maybeToRight)
@@ -69,12 +69,8 @@ scanFile input output = runExceptT $ do
     h <- except $ maybeToRight (errorWithLineNum 1 "Operation count expected") $ headMay lines
     opCount <- except $ maybeToRight (errorWithLineNum 1 "Operation count expected") (readMaybe h :: Maybe Int)
     opLines <- except $ maybeToRight (errorWithLineNum 2 "Operation expected") $ tailMay lines
-    -- ExceptT $ parseOps output opCount opLines
-
-    eiModel <- parseOps output opCount opLines
-    case eiModel of
-        Right model -> except $ Right ()
-        Left err -> except $ Left err
+    _ <- ExceptT $ parseOps output opCount opLines
+    except $ Right ()
 
 
 getLines :: MonadIO m => FilePath -> m [Line]
