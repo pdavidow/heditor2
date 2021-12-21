@@ -54,4 +54,3 @@ c
 y
 a
 ````
-# heditorT
